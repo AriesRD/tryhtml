@@ -45,6 +45,7 @@
 </head>
 <body>
   <h2>🎬 影片標題合併程式</h2>
+  <button onclick="clean()">🈳 清空頁面</button>
 
   <label for="urlInput">請貼上影片網址：</label>
   <input type="text" id="urlInput" placeholder="例如：https://youtu.be/abc12345678">
@@ -121,6 +122,12 @@
       document.execCommand("copy");
       alert("✅ 已複製到剪貼簿！");
     }
+
+    function clean() {
+      document.getElementById("urlInput").value = "";
+      document.getElementById("output").value = "";
+    }
+    
   </script>
 </body>
 </html>
