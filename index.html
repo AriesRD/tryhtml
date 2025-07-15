@@ -3,26 +3,56 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>研究抓取影片標題</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>影片標題合併程式</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f4f4f4; }
-    input, button, textarea { width: 100%; margin: 10px 0; padding: 10px; font-size: 16px; }
-    button { background-color: #007BFF; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #0056b3; }
-    textarea { resize: vertical; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      padding: 1.2em;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h2 {
+      font-size: 1.6em;
+      text-align: center;
+      margin-bottom: 1em;
+    }
+    label {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    input, button, textarea {
+      width: 100%;
+      margin: 12px 0;
+      padding: 14px;
+      font-size: 1.1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    textarea {
+      resize: vertical;
+    }
   </style>
 </head>
 <body>
-  <h2>研究抓取影片標題</h2>
-<button onclick="clean()">🈳 清空頁面</button>
-  
-  <label for="urlInput">貼上影片網址：</label>
+  <h2>🎬 影片標題合併程式</h2>
+
+  <label for="urlInput">請貼上影片網址：</label>
   <input type="text" id="urlInput" placeholder="例如：https://youtu.be/abc12345678">
 
   <button onclick="generate()">✅ 抓取標題</button>
 
   <label for="output">產出內容：</label>
-  <textarea id="output" rows="3" readonly></textarea>
+  <textarea id="output" rows="4" readonly></textarea>
 
   <button onclick="copyToClipboard()">📋 複製內容</button>
 
@@ -53,7 +83,6 @@
       const videoId = extractYouTubeVideoId(url);
 
       if (videoId) {
-        // 👉 用 YouTube API 抓取標題
         const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
         try {
           const res = await fetch(apiUrl);
@@ -69,7 +98,6 @@
         }
       }
 
-      // 👉 Fallback：使用 fetch 方式抓取 title
       try {
         const res = await fetch(url);
         const html = await res.text();
@@ -93,11 +121,6 @@
       document.execCommand("copy");
       alert("✅ 已複製到剪貼簿！");
     }
-
-    function clean() {
-  document.getElementById("urlInput").value = "";
-  document.getElementById("output").value = "";
-}
   </script>
 </body>
 </html>
