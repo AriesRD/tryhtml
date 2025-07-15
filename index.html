@@ -104,7 +104,7 @@
         const html = await res.text();
         const match = html.match(/<title>(.*?)<\/title>/i);
         if (match && match[1]) {
-          const title = match[1].replace(/\s+/g, " ").trim();
+          const title = decodeHtmlEntities(match[1].replace(/\s+/g, " ").trim());
           const result = `${title}\n${url}`;
           document.getElementById("output").value = result;
         } else {
@@ -126,6 +126,12 @@
     function clean() {
       document.getElementById("urlInput").value = "";
       document.getElementById("output").value = "";
+    }
+
+    function decodeHtmlEntities(str) {
+      const txt = document.createElement("textarea");
+      txt.innerHTML = str;
+      return txt.value;
     }
     
   </script>
