@@ -6,54 +6,93 @@
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
     input, button, textarea { width: 100%; margin: 10px 0; padding: 10px; font-size: 16px; }
-    button { background-color: #007BFF; color: #fff; border: none; cursor: pointer; }
+    button { background-color: #007BFF; color: white; border: none; cursor: pointer; }
     button:hover { background-color: #0056b3; }
   </style>
 </head>
 <body>
   <h2>研究抓取標題+網址</h2>
+
   <label for="urlInput">貼上 YouTube 網址：</label>
-  <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=xxxxx">
+  <input type="text" id="urlInput" placeholder="貼上 YouTube 網址，例如：https://youtu.be/abc123">
 
   <button onclick="generate()">✅ 自動產生</button>
 
   <label for="output">產出內容：</label>
   <textarea id="output" rows="3" readonly></textarea>
 
-  <button onclick="copyToClipboard()">📋 複製</button>
+  <button onclick="copyToClipboard()">📋 複製內容</button>
 
   <script>
-    const apiKey = "AIzaSyChGTvGmSLbDmE1WYi9Ru-ZW0GzbZComKQ";
+    const apiKey = "AIzaSyChGTvGmSLbDmE1WYi9Ru-ZW0GzbZComKQ"; // <<< ←←← 這裡請替換為你的 API 金鑰
 
     function extractVideoId(url) {
-  try {
-    // 建立一個 URL 物件以便解析
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname;
+      try {
+        const parsedUrl = new URL(url);
+        const hostname = parsedUrl.hostname;
+        const pathname = parsedUrl.pathname;
 
-    // 處理標準網址 https://www.youtube.com/watch?v=xxx
-    if (hostname.includes("youtube.com")) {
-      if (parsedUrl.pathname === "/watch") {
-        return parsedUrl.searchParams.get("v");
-      } else if (parsedUrl.pathname.startsWith("/embed/")) {
-        return parsedUrl.pathname.split("/embed/")[1];
+        // https://www.youtube.com/watch?v=xxx
+        if (hostname.includes("youtube.com") && parsedUrl.searchParams.get("v")) {
+          return parsedUrl.searchParams.get("v");
+        }
+
+        // https://youtu.be/xxx
+        if (hostname === "youtu.be") {
+          return pathname.slice(1);
+        }
+
+        // https://www.youtube.com/embed/xxx
+        if (pathname.startsWith("/embed/")) {
+          return pathname.split("/embed/")[1];
+        }
+
+        // https://www.youtube.com/shorts/xxx
+        if (pathname.startsWith("/shorts/")) {
+          return pathname.split("/shorts/")[1];
+        }
+
+        // 其他帶有 v 參數的情況
+        if (parsedUrl.searchParams.has("v")) {
+          return parsedUrl.searchParams.get("v");
+        }
+
+        return null;
+      } catch (e) {
+        return null;
       }
     }
 
-    // 處理短網址 https://youtu.be/xxx
-    if (hostname === "youtu.be") {
-      return parsedUrl.pathname.slice(1); // 移除開頭的 /
+    async function generate() {
+      const url = document.getElementById("urlInput").value.trim();
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        alert("❗ 無法解析影片 ID，請確認網址格式正確");
+        return;
+      }
+
+      const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
+
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+
+        if (data.items && data.items.length > 0) {
+          const title = data.items[0].snippet.title;
+          const shortUrl = `https://youtu.be/${videoId}`;
+          const result = `${title}\n${shortUrl}`;
+          document.getElementById("output").value = result;
+        } else {
+          alert("⚠️ 找不到影片標題，請確認影片是否存在");
+        }
+      } catch (err) {
+        alert("❌ 發生錯誤，請確認 API 金鑰正確且未過期");
+        console.error(err);
+      }
     }
 
-    return null; // 若都不符合，回傳 null
-  } catch (e) {
-    return null;
-  }
-}
-
-
     function copyToClipboard() {
-      const output = document.getElementById('output');
+      const output = document.getElementById("output");
       output.select();
       document.execCommand("copy");
       alert("✅ 已複製到剪貼簿！");
