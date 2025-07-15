@@ -26,35 +26,31 @@
     const apiKey = "AIzaSyChGTvGmSLbDmE1WYi9Ru-ZW0GzbZComKQ";
 
     function extractVideoId(url) {
-      const match = url.match(/[?&]v=([^&]+)/);
-      return match ? match[1] : null;
-    }
+  try {
+    // 建立一個 URL 物件以便解析
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname;
 
-    async function generate() {
-      const url = document.getElementById('urlInput').value.trim();
-      const videoId = extractVideoId(url);
-      if (!videoId) {
-        alert("請確認輸入的網址正確（含有 ?v=xxx）");
-        return;
-      }
-
-      const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
-
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        if (data.items && data.items.length > 0) {
-          const title = data.items[0].snippet.title;
-          const output = `${title}\n${url}`;
-          document.getElementById('output').value = output;
-        } else {
-          alert("找不到影片標題，可能是網址錯誤或影片不存在");
-        }
-      } catch (error) {
-        alert("發生錯誤，請確認 API Key 有效且未超過流量限制");
-        console.error(error);
+    // 處理標準網址 https://www.youtube.com/watch?v=xxx
+    if (hostname.includes("youtube.com")) {
+      if (parsedUrl.pathname === "/watch") {
+        return parsedUrl.searchParams.get("v");
+      } else if (parsedUrl.pathname.startsWith("/embed/")) {
+        return parsedUrl.pathname.split("/embed/")[1];
       }
     }
+
+    // 處理短網址 https://youtu.be/xxx
+    if (hostname === "youtu.be") {
+      return parsedUrl.pathname.slice(1); // 移除開頭的 /
+    }
+
+    return null; // 若都不符合，回傳 null
+  } catch (e) {
+    return null;
+  }
+}
+
 
     function copyToClipboard() {
       const output = document.getElementById('output');
