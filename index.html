@@ -3,21 +3,22 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>研究抓取標題+網址</title>
+  <title>研究抓取影片標題</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f4f4f4; }
     input, button, textarea { width: 100%; margin: 10px 0; padding: 10px; font-size: 16px; }
     button { background-color: #007BFF; color: white; border: none; cursor: pointer; }
     button:hover { background-color: #0056b3; }
+    textarea { resize: vertical; }
   </style>
 </head>
 <body>
-  <h2>研究抓取標題+網址</h2>
+  <h2>研究抓取影片標題</h2>
 
-  <label for="urlInput">貼上 YouTube 網址：</label>
-  <input type="text" id="urlInput" placeholder="貼上 YouTube 網址，例如：https://youtu.be/abc12345678">
+  <label for="urlInput">貼上影片網址：</label>
+  <input type="text" id="urlInput" placeholder="例如：https://youtu.be/abc12345678">
 
-  <button onclick="generate()">✅ 自動產生</button>
+  <button onclick="generate()">✅ 抓取標題</button>
 
   <label for="output">產出內容：</label>
   <textarea id="output" rows="3" readonly></textarea>
@@ -25,49 +26,26 @@
   <button onclick="copyToClipboard()">📋 複製內容</button>
 
   <script>
-    const apiKey = "AIzaSyChGTvGmSLbDmE1WYi9Ru-ZW0GzbZComKQ"; // ←←← 請替換為你的 API 金鑰
-
-    function extractVideoId(url) {
-      const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtube\.com\/.*[?&]v=)([a-zA-Z0-9_-]{11})/,
-        /youtu\.be\/([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
-      ];
-
-      for (let i = 0; i < patterns.length; i++) {
-        const match = url.match(patterns[i]);
-        if (match && match[1]) {
-          return match[1];
-        }
-      }
-      return null;
-    }
-
     async function generate() {
       const url = document.getElementById("urlInput").value.trim();
-      const videoId = extractVideoId(url);
-      if (!videoId) {
-        alert("❗ 無法解析影片 ID，請確認網址格式正確");
+      if (!url.startsWith("http")) {
+        alert("❗ 請輸入完整的影片網址（包含 https://）");
         return;
       }
 
-      const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
-
       try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-
-        if (data.items && data.items.length > 0) {
-          const title = data.items[0].snippet.title;
-          const shortUrl = `https://youtu.be/${videoId}`;
-          const result = `${title}\n${shortUrl}`;
+        const res = await fetch(url);
+        const html = await res.text();
+        const match = html.match(/<title>(.*?)<\/title>/i);
+        if (match && match[1]) {
+          const title = match[1].replace(/\s+/g, " ").trim();
+          const result = `${title}\n${url}`;
           document.getElementById("output").value = result;
         } else {
-          alert("⚠️ 找不到影片標題，請確認影片是否存在");
+          alert("⚠️ 無法抓取標題，可能該網站有防爬蟲或 CORS 限制");
         }
       } catch (err) {
-        alert("❌ 發生錯誤，請確認 API 金鑰正確且未過期");
+        alert("❌ 發生錯誤，可能因瀏覽器安全限制（CORS）無法抓取跨站資料");
         console.error(err);
       }
     }
