@@ -2,40 +2,58 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>YouTube 標題連結產生器</title>
+  <title>研究抓取標題+網址</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background-color: #f9f9f9; }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
     input, button, textarea { width: 100%; margin: 10px 0; padding: 10px; font-size: 16px; }
-    button { background-color: #007BFF; color: white; border: none; cursor: pointer; }
+    button { background-color: #007BFF; color: #fff; border: none; cursor: pointer; }
     button:hover { background-color: #0056b3; }
   </style>
 </head>
 <body>
-  <h2>YouTube 標題 + 連結產生器</h2>
-
+  <h2>研究抓取標題+網址</h2>
   <label for="urlInput">貼上 YouTube 網址：</label>
   <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=xxxxx">
 
-  <label for="titleInput">影片標題：</label>
-  <input type="text" id="titleInput" placeholder="請輸入影片標題（建議從影片頁面複製）">
-
-  <button onclick="generate()">✅ 產生</button>
+  <button onclick="generate()">✅ 自動產生</button>
 
   <label for="output">產出內容：</label>
   <textarea id="output" rows="3" readonly></textarea>
 
-  <button onclick="copyToClipboard()">📋 複製產出內容</button>
+  <button onclick="copyToClipboard()">📋 複製</button>
 
   <script>
-    function generate() {
+    const apiKey = "AIzaSyChGTvGmSLbDmE1WYi9Ru-ZW0GzbZComKQ";
+
+    function extractVideoId(url) {
+      const match = url.match(/[?&]v=([^&]+)/);
+      return match ? match[1] : null;
+    }
+
+    async function generate() {
       const url = document.getElementById('urlInput').value.trim();
-      const title = document.getElementById('titleInput').value.trim();
-      if (!url || !title) {
-        alert('請輸入影片標題與網址');
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        alert("請確認輸入的網址正確（含有 ?v=xxx）");
         return;
       }
-      const output = `${title}\n${url}`;
-      document.getElementById('output').value = output;
+
+      const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        if (data.items && data.items.length > 0) {
+          const title = data.items[0].snippet.title;
+          const output = `${title}\n${url}`;
+          document.getElementById('output').value = output;
+        } else {
+          alert("找不到影片標題，可能是網址錯誤或影片不存在");
+        }
+      } catch (error) {
+        alert("發生錯誤，請確認 API Key 有效且未超過流量限制");
+        console.error(error);
+      }
     }
 
     function copyToClipboard() {
